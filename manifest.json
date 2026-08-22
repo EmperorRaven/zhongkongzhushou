@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "抖音直播中控助手",
+  "description": "直接操作抖音直播中控台，实现自动讲解、自动发评、弹幕关键词自动回复",
+  "version": "2.2.0",
+  "action": {
+    "default_title": "抖音直播中控助手",
+    "default_icon": "assets/icon/logo.png",
+    "default_popup": "popup.html"
+  },
+  "permissions": [],
+  "host_permissions": [
+    "https://buyin.jinritemai.com/*"
+  ],
+  "background": {
+    "service_worker": "js/background.js"
+  },
+  "icons": {
+    "16": "assets/icon/logo.png",
+    "48": "assets/icon/logo.png",
+    "128": "assets/icon/logo.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://buyin.jinritemai.com/dashboard/live/control*"
+      ],
+      "js": ["js/content.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["js/bridge.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["js/inject.js", "js/probe.js", "css/panel.css", "assets/*"],
+      "matches": ["https://buyin.jinritemai.com/*"]
+    },
+    {
+      "resources": ["js/bridge-inject.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

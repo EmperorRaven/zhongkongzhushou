@@ -1,0 +1,33 @@
+=== 自动发评设置 ===
+
+=== 功能面板布局 ===
+
+=== 评论组管理 ===
+
+=== 轮播/多商品设置 ===
+  轮播讲解，解放中控双手")])],-1))),MD={class:"finish_body"},OD={style:{display:"flex","align-items":"flex-end"}}
+  轮播：",name:"multiCommodityRotation"},{default:Cn((()=>[sr(d,{checked:i
+  轮播顺序：",name:"commentOrderType"},{default:Cn((()=>[sr(f,{ref:"select",value:i
+  轮播",name:"carouselOrderType"},{default:Cn((()=>[sr(d,{checked:i
+  轮播讲解"},{default:Cn((()=>[sr(g,{ref:"chooseAllExplanationList",explanationFrequency:i
+  轮播讲解"},{default:Cn((()=>[ar("div",GD,[ar("div",KD,[ar("div",WD,[qD,ar("div",{style:{cursor:"pointer"
+  rotationOrderType,"onUpdate:value":t[7]||(t[7]=e=>i
+  rotationOrderType=e),style:{width:"120px"},placeholder:"请选择","value-key":"serviceItemId"},{default:C
+  rotationCommodityIds:i
+  rotationCommodityIds},null,8,["explanationFrequency","rotationCommodityIds"])])),_:1})),(Qi(),er(m,{
+  carouselOrderType"},{default:Cn((()=>[sr(d,{checked:i
+  carouselOrderType,"onUpdate:checked":t[8]||(t[8]=e=>i
+  carouselOrderType=e),style:{height:"21px !important"}},null,8,["checked"])])),_:1})):fr("",!0)])),_:
+  multiple of 4")
+  multiple of 16-bits")
+  multiple of 32-bits")
+  multiple of 64-bits")
+  multiple times"))
+  multiple times"),r("ERR_STREAM_CANNOT_PIPE","Cannot pipe, not readable"),r("ERR_STREAM_WRITE_AFTER_E
+  multiple&&i
+  multiple",o
+  multiple),i},createText:e=>Qr
+  multiple?i?new Set(t):t:t[0])})),e[is]=ts(o)},mounted(e,{value:t}){us(e,t)},beforeUpdate(e,t,n){e[is
+  multiple
+  multiple",style:{width:"fit-content","min-width":"120px"},placeholder:"请选择",onChange:r
+  multiple muted name novalidate nonce open\noptimum pattern placeholder poster preload radiogroup rea

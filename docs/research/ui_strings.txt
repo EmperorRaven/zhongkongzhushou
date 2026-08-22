@@ -1,0 +1,28 @@
+=== Vue Components ===
+
+=== Key UI Text (top 60) ===
+   21x  一键填充
+   20x  修改成功
+   19x  保存成功
+   13x  未开播状态下，需手动刷新页面获得实时更新内容
+   12x  暂无数据
+   11x   确定 
+    9x  商品信息
+    9x  商品规格
+    8x  请输入验证码
+    8x  请求太快，请稍后再试
+    7x  请输入手机号
+    7x   保存 
+    7x  间隔时间
+    7x  音频未设置
+    7x  请选择商品
+    7x   批量填充 
+    6x  将在直播开始后生效
+    6x  库存清零
+    6x  设置成功
+    6x  预设库存1
+    6x  预设库存2
+    6x  预设库存3
+Traceback (most recent call last):
+  File "<stdin>", line 19, in <module>
+UnicodeEncodeError: 'gbk' codec can't encode character '\xa0' in position 20: illegal multibyte sequence

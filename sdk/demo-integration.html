@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我的直播间控制台 — 中控 API 整合示例</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #f0f2f5; color: #1a1a1a; min-height: 100vh; }
+
+  /* 顶部状态栏 */
+  .topbar { background: #fff; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 4px rgba(0,0,0,0.08); position: sticky; top: 0; z-index: 100; }
+  .topbar h1 { font-size: 18px; }
+  .conn-status { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.on { background: #52c41a; box-shadow: 0 0 6px #52c41a; }
+  .dot.off { background: #ff4d4f; }
+  .dot.wait { background: #faad14; animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: 0.3; } }
+
+  /* 主布局 */
+  .layout { display: flex; gap: 16px; padding: 16px; max-width: 1200px; margin: 0 auto; }
+  .panel { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+
+  /* 左栏：商品列表 */
+  .products-panel { flex: 1; min-width: 0; }
+  .panel-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+  .btn-sm { padding: 4px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; background: #1e80ff; color: #fff; }
+  .btn-sm:hover { background: #1677ff; }
+  .btn-sm:disabled { background: #d9d9d9; cursor: not-allowed; }
+  .btn-sm.green { background: #52c41a; }
+  .btn-sm.green:hover { background: #389e0d; }
+  .btn-sm.gray { background: #8c8c8c; }
+  .btn-sm.gray:hover { background: #595959; }
+
+  .product-list { display: flex; flex-direction: column; gap: 8px; }
+  .product-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid #f0f0f0; border-radius: 8px; transition: border-color 0.2s; }
+  .product-item:hover { border-color: #1e80ff; }
+  .product-item.explaining { border-color: #52c41a; background: #f6ffed; }
+  .product-index { width: 28px; height: 28px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #666; flex-shrink: 0; }
+  .product-item.explaining .product-index { background: #52c41a; color: #fff; }
+  .product-info { flex: 1; min-width: 0; }
+  .product-name { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .product-meta { font-size: 12px; color: #999; margin-top: 2px; }
+  .product-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .empty-state { text-align: center; padding: 40px; color: #999; font-size: 14px; }
+
+  /* 右栏：弹幕 + 状态 */
+  .side-panel { width: 360px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; }
+
+  .comment-box textarea { width: 100%; height: 70px; padding: 10px; border: 1px solid #d9d9d9; border-radius: 8px; font-size: 14px; resize: none; font-family: inherit; }
+  .comment-box textarea:focus { border-color: #1e80ff; outline: none; }
+  .comment-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .comment-actions button { flex: 1; }
+
+  /* 快捷弹幕 */
+  .quick-comments { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .quick-tag { padding: 4px 10px; border: 1px solid #d9d9d9; border-radius: 16px; font-size: 12px; cursor: pointer; transition: all 0.2s; background: #fafafa; }
+  .quick-tag:hover { border-color: #1e80ff; color: #1e80ff; }
+
+  /* 状态卡片 */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-card { background: #fafafa; border-radius: 8px; padding: 12px; text-align: center; }
+  .stat-value { font-size: 22px; font-weight: 700; }
+  .stat-label { font-size: 12px; color: #999; margin-top: 4px; }
+  .stat-value.green { color: #52c41a; }
+  .stat-value.red { color: #ff4d4f; }
+
+  /* 日志 */
+  .log-box { background: #1a1a1a; border-radius: 8px; padding: 12px; max-height: 200px; overflow-y: auto; font-family: "Cascadia Code", "Consolas", monospace; font-size: 12px; }
+  .log-box .line { margin: 2px 0; color: #aaa; }
+  .log-box .line.ok { color: #52c41a; }
+  .log-box .line.err { color: #ff4d4f; }
+  .log-box .line.info { color: #1e80ff; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: rgba(0,0,0,0.85); color: #fff; padding: 10px 24px; border-radius: 8px; font-size: 14px; transition: transform 0.3s; z-index: 9999; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .disabled-overlay { opacity: 0.5; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<!-- 顶部状态栏 -->
+<div class="topbar">
+  <h1>📺 我的直播间控制台</h1>
+  <div class="conn-status">
+    <span class="dot wait" id="connDot"></span>
+    <span id="connText">正在连接中控助手...</span>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- 左栏：商品列表 -->
+  <div class="panel products-panel" id="mainPanel">
+    <div class="panel-title">
+      商品列表
+      <button class="btn-sm" onclick="refreshProducts()">🔄 刷新</button>
+    </div>
+    <div class="product-list" id="productList">
+      <div class="empty-state">正在加载商品...</div>
+    </div>
+  </div>
+
+  <!-- 右栏 -->
+  <div class="side-panel">
+
+    <!-- 状态卡片 -->
+    <div class="panel">
+      <div class="panel-title">运行状态</div>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="statProducts">-</div>
+          <div class="stat-label">商品总数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statExplain">-</div>
+          <div class="stat-label">讲解中</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statAutoExplain">-</div>
+          <div class="stat-label">自动讲解</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statAutoComment">-</div>
+          <div class="stat-label">自动弹幕</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 弹幕发布 -->
+    <div class="panel comment-box">
+      <div class="panel-title">发送弹幕</div>
+      <textarea id="commentInput" placeholder="输入弹幕内容..."></textarea>
+      <div class="quick-comments">
+        <span class="quick-tag" onclick="quickComment('好货推荐！')">好货推荐！</span>
+        <span class="quick-tag" onclick="quickComment('马上抢购！')">马上抢购！</span>
+        <span class="quick-tag" onclick="quickComment('数量有限')">数量有限</span>
+        <span class="quick-tag" onclick="quickComment('性价比超高')">性价比超高</span>
+        <span class="quick-tag" onclick="quickComment('关注主播不迷路')">关注主播不迷路</span>
+      </div>
+      <div class="comment-actions">
+        <button class="btn-sm green" onclick="sendComment()">发送弹幕</button>
+      </div>
+    </div>
+
+    <!-- 日志 -->
+    <div class="panel">
+      <div class="panel-title">操作日志</div>
+      <div class="log-box" id="logBox">
+        <div class="line">等待操作...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 引入 SDK -->
+<script src="sdk/zkb-client.js"></script>
+<script>
+// ============================================================
+//  整合示例：在第三方页面中使用中控助手 API
+// ============================================================
+
+var currentProducts = [];
+var explainingIndex = -1;
+
+// ---- 初始化 ----
+ZKB.ready(8000)
+  .then(function () {
+    setConn(true);
+    log("中控 API 已连接", "ok");
+    // 启动状态轮询（每 3 秒）
+    ZKB.startStatusPolling(3000);
+    ZKB.on("statuschange", onStatusChange);
+    // 加载商品列表
+    refreshProducts();
+    // 初始拉一次状态
+    refreshStatus();
+  })
+  .catch(function () {
+    setConn(false);
+    log("中控 API 连接失败 — 请确认扩展已安装且中控台页面已打开", "err");
+  });
+
+// ---- 连接状态 ----
+function setConn(connected) {
+  var dot = document.getElementById("connDot");
+  var text = document.getElementById("connText");
+  var panel = document.getElementById("mainPanel");
+  if (connected) {
+    dot.className = "dot on";
+    text.textContent = "已连接中控助手";
+    panel.classList.remove("disabled-overlay");
+  } else {
+    dot.className = "dot off";
+    text.textContent = "未连接 — 请打开中控台页面";
+    panel.classList.add("disabled-overlay");
+  }
+}
+
+// ---- 商品列表 ----
+async function refreshProducts() {
+  try {
+    var res = await ZKB.listProducts();
+    if (res && res.success) {
+      currentProducts = res.products || [];
+      renderProducts();
+      document.getElementById("statProducts").textContent = res.count || currentProducts.length;
+      log("商品列表已刷新: " + currentProducts.length + " 个", "ok");
+    } else {
+      document.getElementById("productList").innerHTML = '<div class="empty-state">获取商品失败: ' + (res && res.error || "未知错误") + '</div>';
+    }
+  } catch (e) {
+    log("获取商品列表失败: " + (e.error || e.message || e), "err");
+  }
+}
+
+function renderProducts() {
+  var el = document.getElementById("productList");
+  if (currentProducts.length === 0) {
+    el.innerHTML = '<div class="empty-state">暂无商品</div>';
+    return;
+  }
+  el.innerHTML = currentProducts.map(function (p) {
+    var isActive = p.index === explainingIndex;
+    return (
+      '<div class="product-item' + (isActive ? " explaining" : "") + '">' +
+      '<div class="product-index">' + p.index + '</div>' +
+      '<div class="product-info">' +
+        '<div class="product-name">' + escapeHtml(p.name || "未命名商品") + '</div>' +
+        '<div class="product-meta">' +
+          (p.price ? "¥" + p.price : "") +
+          (p.stock !== undefined ? "  库存:" + p.stock : "") +
+        '</div>' +
+      '</div>' +
+      '<div class="product-actions">' +
+        '<button class="btn-sm' + (isActive ? " gray" : " green") + '" onclick="explainProduct(' + p.index + ')">' +
+          (isActive ? "取消讲解" : "讲解") +
+        '</button>' +
+      '</div>' +
+    '</div>';
+  }).join("");
+}
+
+// ---- 讲解商品 ----
+async function explainProduct(index) {
+  if (index === explainingIndex) {
+    // 取消讲解
+    try {
+      await ZKB.cancelExplain(index);
+      explainingIndex = -1;
+      log("已取消讲解商品 #" + index, "info");
+      renderProducts();
+    } catch (e) {
+      log("取消讲解失败: " + (e.error || e.message), "err");
+    }
+    return;
+  }
+  try {
+    var res = await ZKB.explain(index);
+    if (res && res.success) {
+      explainingIndex = index;
+      log("开始讲解: #" + index + " " + (res.name || ""), "ok");
+      toast("已讲解 #" + index);
+      renderProducts();
+    } else {
+      log("讲解失败: " + (res && res.error), "err");
+    }
+  } catch (e) {
+    log("讲解失败: " + (e.error || e.message || e), "err");
+  }
+}
+
+// ---- 弹幕 ----
+async function sendComment() {
+  var text = document.getElementById("commentInput").value.trim();
+  if (!text) return;
+  try {
+    var res = await ZKB.comment(text);
+    if (res && res.success) {
+      log("弹幕已发送: " + text, "ok");
+      toast("弹幕已发送");
+      document.getElementById("commentInput").value = "";
+    } else {
+      log("弹幕发送失败: " + (res && res.error), "err");
+    }
+  } catch (e) {
+    log("弹幕发送失败: " + (e.error || e.message || e), "err");
+  }
+}
+
+function quickComment(text) {
+  document.getElementById("commentInput").value = text;
+  sendComment();
+}
+
+// 回车发送
+document.getElementById("commentInput").addEventListener("keydown", function (e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendComment();
+  }
+});
+
+// ---- 状态 ----
+async function refreshStatus() {
+  try {
+    var res = await ZKB.getStatus();
+    if (res && res.success) {
+      updateStatusUI(res);
+    }
+  } catch (e) {}
+}
+
+function onStatusChange(status) {
+  updateStatusUI(status);
+  // 如果讲解状态变了，刷新商品列表
+  if (status.explainingIndex !== undefined && status.explainingIndex !== explainingIndex) {
+    explainingIndex = status.explainingIndex;
+    renderProducts();
+  }
+}
+
+function updateStatusUI(s) {
+  var el1 = document.getElementById("statAutoExplain");
+  var el2 = document.getElementById("statAutoComment");
+  el1.textContent = s.autoExplainRunning ? "运行中" : "停止";
+  el1.className = "stat-value " + (s.autoExplainRunning ? "green" : "red");
+  el2.textContent = s.autoCommentRunning ? "运行中" : "停止";
+  el2.className = "stat-value " + (s.autoCommentRunning ? "green" : "red");
+  document.getElementById("statExplain").textContent = s.explainingIndex >= 0 ? "#" + s.explainingIndex : "无";
+}
+
+// ---- 工具函数 ----
+function log(msg, type) {
+  var box = document.getElementById("logBox");
+  var line = document.createElement("div");
+  line.className = "line " + (type || "");
+  var ts = new Date().toLocaleTimeString();
+  line.textContent = "[" + ts + "] " + msg;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+function toast(msg) {
+  var el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  setTimeout(function () { el.classList.remove("show"); }, 2000);
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+</script>
+
+</body>
+</html>
